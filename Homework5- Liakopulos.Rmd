@@ -1,0 +1,123 @@
+---
+title: "Homework 5"
+by: Leticia Liakopulos
+output:
+  html_document: default
+pdf_document: default
+---  
+
+At the bottom of the assignments I will leave my questions answered that were asked in the Homework.
+
+
+# Prep Data
+```{r}
+# create a file path object  
+file_dir <- "~/Desktop/MSBDA/Winter 2021:22/INFS 494/tareas" 
+# load the data set
+GermanCredit <- read.csv(paste0(file_dir, "/GermanCredit_modified_202003.csv"), stringsAsFactors = TRUE)
+```
+  
+```{r}
+#remove the class Variable
+df <- GermanCredit[,-grep("Class", colnames(GermanCredit))]
+```
+
+```{r}
+# Set seed to ensure reproducible results
+# this must be in the same code chunk for which you wish it to apply!
+set.seed(11121998)
+
+# select 632 random integers from 1 to the number of rows in df
+# without replacement, meaning a unique integer can occur only once
+# assign this array to an object called, splitIndex
+splitIndex <- sample(nrow(df), size=632, replace=F)
+
+# select only those rows in splitIndex and assign to the training data frame
+trainDF <- df[splitIndex,]
+# select only those rows not in splitIndex and assign to the test data frame
+# this is our holdout
+testDF  <- df[-splitIndex,]
+```
+
+# Full Linear Model
+```{r}
+lm.1 = lm(Amount ~ . , data= trainDF)
+summary(lm.1)
+```
+
+Model Performance
+```{r}
+# Model Summary  
+# Instead of printing the entire model summary as we did in assignment 2, we 
+# can assign the summary to an object and call only parts of it.  
+lm.1.summary <- summary(lm.1)
+
+# Model R-Squared and Adjusted R-Squared  
+# We can call objects from the summary object using the $ notation  
+# the ; in R allows us to execute multiple statements on a single line
+lm.1.summary$r.squared; lm.1.summary$adj.r.squared
+```
+
+# Holdout
+```{r}
+xp.1 <- predict(lm.1, newdata = testDF)
+```
+
+
+```{r}
+# calculate holdout r-squared
+holdout.rsqr <- cor(testDF[,"Amount"], xp.1)^2  
+
+# print holdout r-squared
+holdout.rsqr
+```
+
+# Improved Linear Model
+```{r}
+lm.final = lm(log(Amount)~Duration*InstallmentRatePercentage + Loan.Purpose + Checking.Status*Credit.History + Job.Type*Age + Savings.Bonds, data = trainDF)
+summary(lm.final)
+```
+
+# Holdout Final Model
+```{r}
+xp.final <- predict(lm.final, newdata = testDF)
+```
+
+```{r}
+# calculate holdout r-squared
+holdout.rsqr <- cor(testDF[,"Amount"], xp.final)^2  
+
+# print holdout r-squared
+holdout.rsqr
+```
+
+# Comparing the Final Model with Homework 4 Final Model
+```{r}
+lm.final2 = lm(log(Amount)~Duration*InstallmentRatePercentage + NumberExistingCredits + Age +Checking.Status+ Credit.History , data =trainDF )
+summary(lm.final2)
+```
+
+# Holdout HW4 vs Final Model HW5
+```{r}
+xp.final2 <- predict(lm.final2, newdata = testDF)
+```
+
+```{r}
+# calculate holdout r-squared
+holdout.rsqr <- cor(testDF[,"Amount"], xp.final2)^2  
+
+# print holdout r-squared
+holdout.rsqr
+```
+
+Questions:
+
+Why this model is better than lm.1?
+- The final Improved Model is better than lm.1 since it only includes the variables that have a strong correlation and that impact the final R-Squared. Even though the R-squared only went up by approximaetely 0.2, it is a way simpler model, taking off variables such as Personal Status,Housing, Employment Duration, and others. The variables in lm.final were selected to simply the complexity of the model while improving the final R-Squared. It also performs well with the testDF data set since it improves the holdout of that data set.
+
+Which Model is "better" and why? (HW4 Final Model vs HW5 Final Model)
+-In my opinion, the best model is the Final Model of HW5 since it improves R-Squared and simplifies the model at the same time. The Final Model of HW4 improves the model only by simplifying the model but does not improves the R-squared. It can be proven since it has a better holdout on the testDF data set.
+
+
+
+
